@@ -1,0 +1,13 @@
+.DS_Store
+assets/
+build/
+preserved-states/
+__pycache__/
+.venv/
+*.gba
+*.ips
+*.bps
+*.sav
+*.ss0
+*.srm
+*.state*
