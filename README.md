@@ -29,6 +29,12 @@ fonts to Traditional Chinese. Apply it only to the source ROM identified below:
 
 This is a font-only release patch, not a complete proofread or contextual translation.
 
+### Screenshots
+
+| Welcome screen | Chapter title cards |
+| --- | --- |
+| ![Traditional Chinese welcome screen](build/reviewed-20261022-versioned-v2/welcome.png) | ![Traditional Chinese chapter title cards](build/reviewed-20261022-versioned-v2/chapters.png) |
+
 ## Repository contents
 
 This repository includes tools, tests, the character mapping, and replacement
