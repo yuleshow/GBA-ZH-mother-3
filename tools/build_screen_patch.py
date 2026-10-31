@@ -195,12 +195,6 @@ def chapter_records(rom, font_path):
     shades = [((value & 31) * 255 // 31)
               for (value,) in struct.iter_unpack("<H", palette[:32])]
     font = ImageFont.truetype(str(font_path), 56)
-    substitutions = {
-        0: [(88, "\u5f14")],
-        1: [(120, "\u6b77"), (136, "\u96aa")],
-        3: [(136, "\u5287"), (152, "\u5834")],
-        6: [(128, "\u91dd")],
-    }
     tiles = bytearray()
     unique = {}
     maps = []
@@ -209,13 +203,23 @@ def chapter_records(rom, font_path):
         original_map = rom[slice(*entries[46 + chapter])]
         original = render(original_tiles, palette, original_map)
         image = original.convert("L")
-        for left, character in substitutions.get(chapter, []):
+        image.paste(0, (0, 72, 240, 88))
+        title = CHAPTER_TITLES[chapter]
+        left = (240 - sum(11 if character == " " else 16 for character in title)) // 2
+        for character in title:
+            if character == " ":
+                left += 11
+                continue
             glyph = Image.new("L", (64, 64))
             draw = ImageDraw.Draw(glyph)
-            draw.text((4, 8), character, font=font, fill=255, anchor="lt",
+            bounds = draw.textbbox((4, 52), character, font=font, anchor="ls", stroke_width=2)
+            if min(bounds[:2]) < 0 or max(bounds[2:]) > 64:
+                raise ValueError("Chapter glyph exceeds its cell")
+            draw.text((4, 52), character, font=font, fill=255, anchor="ls",
                       stroke_width=2, stroke_fill=255)
             glyph = glyph.resize((16, 16), Image.Resampling.LANCZOS)
             image.paste(glyph, (left, 72))
+            left += 16
         indexed = Image.new("P", image.size)
         indexed.putdata([min(range(16), key=lambda index: abs(shades[index] - value))
                          for value in image.tobytes()])
@@ -229,8 +233,6 @@ def chapter_records(rom, font_path):
             mapping.extend(struct.pack("<H", unique[tile]))
         maps.append(bytes(mapping))
         preview = render(bytes(tiles), palette, maps[-1])
-        if chapter not in substitutions and preview.tobytes() != original.tobytes():
-            raise AssertionError("An unchanged chapter card differs")
         if preview.crop((0, 0, 256, 72)).tobytes() != original.crop((0, 0, 256, 72)).tobytes():
             raise AssertionError("Chapter number line changed")
         previews.append(preview.crop((0, 0, 240, 160)))

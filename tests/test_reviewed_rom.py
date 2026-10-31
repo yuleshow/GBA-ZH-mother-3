@@ -12,7 +12,7 @@ from tools.build_rom import (
     create_bps, variable_integer,
 )
 from tools.build_screen_patch import (
-    CHAPTER_RELOCATED, MISC_TABLE, TITLE_TABLE, WELCOME_RELOCATED, WELCOME_TABLE,
+    CHAPTER_RELOCATED, CHAPTER_TITLES, MISC_TABLE, TITLE_TABLE, WELCOME_RELOCATED, WELCOME_TABLE,
     RELEASE_VERSION,
     compress, decompress, encode_image, padding_record, render, table_entries,
 )
@@ -404,15 +404,46 @@ class ReviewedRomTests(unittest.TestCase):
         pointer = struct.unpack_from("<I", self.output, MISC_TABLE + 4 + 44 * 4)[0]
         self.assertEqual(pointer + MISC_TABLE, CHAPTER_RELOCATED)
         self.assertEqual(len(new_tiles), len(original_tiles))
-        changed_cells = {0: [88], 1: [120, 136], 3: [136, 152], 6: [128]}
+        changed_cells = (
+            (88, 104, 120, 136), (88, 104, 120, 136),
+            (72, 88, 104, 120, 136, 152), (72, 88, 104, 120, 136, 152),
+            (96, 112, 128), (72, 88, 104, 120, 136, 152),
+            (96, 112, 128), (82, 98, 125, 141),
+        )
         for chapter in range(8):
             original = render(original_tiles, palette, self.source[slice(*entries[46 + chapter])])
             actual = render(new_tiles, palette, self.output[slice(*entries[46 + chapter])])
             self.assertEqual(actual.crop((0, 0, 240, 160)).tobytes(), self.chapters[chapter].tobytes())
-            for left in changed_cells.get(chapter, []):
-                original.paste(0, (left, 72, left + 16, 88))
-                actual.paste(0, (left, 72, left + 16, 88))
+            for left in changed_cells[chapter]:
+                with self.subTest(chapter=chapter, left=left):
+                    self.assertNotEqual(actual.crop((left, 72, left + 16, 88)).tobytes(),
+                                        original.crop((left, 72, left + 16, 88)).tobytes())
+            original.paste(0, (0, 72, 240, 88))
+            actual.paste(0, (0, 72, 240, 88))
             self.assertEqual(actual.tobytes(), original.tobytes())
+
+    def test_chapter_titles_share_font_and_baseline(self):
+        font = ImageFont.truetype("/System/Library/Fonts/STHeiti Medium.ttc", 56)
+        entries = table_entries(self.source, MISC_TABLE)
+        shades = [(value & 31) * 255 // 31 for (value,) in
+                  struct.iter_unpack("<H", self.source[slice(*entries[45])][:32])]
+        for chapter, title in enumerate(CHAPTER_TITLES):
+            expected = Image.new("L", (240, 16))
+            left = (88, 88, 72, 72, 96, 72, 96, 82)[chapter]
+            for character in title:
+                if character == " ":
+                    left += 11
+                    continue
+                glyph = Image.new("L", (64, 64))
+                ImageDraw.Draw(glyph).text((4, 52), character, font=font, fill=255,
+                                          anchor="ls", stroke_width=2, stroke_fill=255)
+                expected.paste(glyph.resize((16, 16), Image.Resampling.LANCZOS), (left, 0))
+                left += 16
+            expected = expected.point([min(shades, key=lambda shade: abs(shade - value))
+                                       for value in range(256)])
+            with self.subTest(chapter=chapter):
+                actual = self.chapters[chapter].convert("L").crop((0, 72, 240, 88))
+                self.assertEqual(actual.tobytes(), expected.tobytes())
 
     def test_welcome_allocation_prompt_and_main_title(self):
         original = table_entries(self.source, WELCOME_TABLE)

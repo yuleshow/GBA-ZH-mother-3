@@ -10,6 +10,25 @@ special dialogue font, selected script strings, resource pointers, the opening
 graphic, and chapter lettering.
 Save logic is unchanged; neither builder accesses user saves.
 
+For gameplay, see the [Traditional Chinese main-story walkthrough](WALKTHROUGH.md),
+covering all eight chapters, boss tactics, progression reminders, and a separately
+marked final-battle spoiler section.
+
+## v2026.10.31 release
+
+The IPS release patch converts the supplied Chinese 1.2 completion ROM's bitmap
+fonts to Traditional Chinese. Apply it only to the source ROM identified below:
+
+- Original Japanese ROM CRC32: `42AC9CB9`
+- Chinese 1.2 completion ROM CRC32: `A1E9070D`
+- Chinese 1.2 completion ROM SHA-256:
+  `b3ed0f1c5c8d53a9537bee32c993b986f38ae57453c882499191f1dbafb31fb3`
+- Patch:
+  [mother3-zh-Hant-font-only.ips](build/release-20261031/mother3-zh-Hant-font-only.ips)
+- Patch SHA-256: `cfd8202e0ce3e90012df3339f59c9fd90410e566f5a9488e5f6437cbef931765`
+
+This is a font-only release patch, not a complete proofread or contextual translation.
+
 ## Repository contents
 
 This repository includes tools, tests, the character mapping, and replacement
@@ -141,6 +160,8 @@ to deploy pending work.
 
 | Reported text | Correction | Context | Status |
 | --- | --- | --- | --- |
+| 剃須 | 剃鬚 | User report on 2026-10-25; context not yet specified | Pending batch; not investigated or implemented |
+| 烏冬面 | 烏冬麵 | User report on 2026-10-25; context not yet specified | Pending batch; not investigated or implemented |
 | 放松 | 放鬆 | 9 parsed occurrences | Tested and installed in the 2026-10-22 batch |
 | 3年后 | 3年後 | Chapter 4 opening, when 硫卡 becomes protagonist | Still unidentified; user explicitly deferred on 2026-10-22 |
 | 干燥 | 乾燥 | User confirmed this spelling on 2026-10-22, correcting the recorded 乾㘇 | Normal text verified; special-font 乾 installed in the batch |
@@ -150,7 +171,7 @@ to deploy pending work.
 | 着 | 著 | All occurrences, as requested by user | 744 parsed normal-text uses and the special-font glyph converted and installed |
 | 世界」在某個時候消亡了。 | 「世界」在某個時候消亡了。 | User screenshot: pair the opening and closing corner quotes around 世界 | Opening quote installed; relocated-bank pointers tested |
 | 因此「世界」已經沒有了。◆到此 | Insert a newline after 沒有了。 so ◆到此 starts on the next line | User screenshot: following dialogue runs past the right edge | Newline installed; independently referenced suffix preserved and tested |
-| 土星先星 dialogue appears entirely in Simplified Chinese | Convert the separate special-font glyphs to Traditional Chinese | Separate 16x16 font mode 2 | 86 glyphs converted, pixel-tested, and installed |
+| 土星先生 dialogue appears entirely in Simplified Chinese | Convert the separate special-font glyphs to Traditional Chinese | Separate 16x16 font mode 2 | 86 glyphs converted, pixel-tested, and installed |
 
 #### Special dialogue font implementation
 
@@ -508,9 +529,23 @@ The main MOTHER 3 title and credits remain unchanged.
 
 All eight chapter cards were decoded and reviewed: `弔唁之夜`, `小偷歷險`,
 `奇怪旅行商人`, `奇奇布的劇場`, `雷之塔`, `向日葵的高原`, `七根針`,
-and `一切 一切`. Only six character cells change; the chapter-number lines,
-other characters, positions, palette, and VRAM allocation are preserved.
+and `一切 一切`. The installed 2026-10-22 revision changes only six character
+cells; the chapter-number lines, other characters, positions, palette, and
+VRAM allocation are preserved in that revision.
 These are bitmap graphics, independent of ordinary dialogue fonts.
+
+Local update on 2026-10-24: All eight titles now redraw every Chinese character
+(36 cells total) with the same font, size, stroke, and baseline. This supersedes
+the earlier Chapter-1-only candidate. The chapter-number lines, pixels outside
+the title band, palette, and VRAM allocation remain unchanged. Titles retain
+their original horizontal layout, including Chapter 8's narrower separator;
+the old stray pixel beside Chapter 7's first cell is cleared. Shared font
+metrics preserve natural vertical placement, including the single stroke of
+`一`, without clipping glyphs. The C2 ROM, BPS patch, and previews are in
+`build/all-chapter-titles-20261024`; this update is not deployed. Both chapter
+regression tests and the BPS round-trip pass. The preview sheet was visually
+checked; actual emulator loading remains unverified because the local mGBA
+core is unavailable.
 
 ### Dialogue correction
 
